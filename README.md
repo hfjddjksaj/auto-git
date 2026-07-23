@@ -78,6 +78,10 @@ references/
 - Secrets block in `.gitignore` is mandatory; hooks respect `.gitignore`.
 - Hooks always exit 0 — they can never block or break your session.
 
+## License
+
+[MIT](LICENSE)
+
 ---
 
 ## 中文说明
