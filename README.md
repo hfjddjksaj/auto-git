@@ -10,16 +10,19 @@ When activated in a code project, Claude:
 
 1. Runs `git init`, writes a sensible `.gitignore` (with a mandatory secrets
    block), creates `progress.md`, and makes the initial commit.
-2. With your explicit approval, installs two project-local **Stop hooks** that
-   run after every round:
-   - **progress-check** — if the round changed files but `progress.md` wasn't
-     updated, it blocks once with a reminder so Claude (which has the context)
-     writes a real progress entry and commits. It never loops and never writes
-     content itself.
+2. With your explicit approval, installs a project-local **Stop hook** that
+   runs after every round:
    - **autocommit** — commits anything left uncommitted as a safety net, and
      pushes only when the current branch already has an upstream and is ahead
      of it. Never force-pushes, never rewrites history, always exits 0.
-3. Records a per-round routine in the project's `CLAUDE.md` so future sessions
+3. Offers one more hook as a **separate, opt-in choice — never installed by
+   default**, with its consequences spelled out first:
+   - **progress-check** — if a round changed files but `progress.md` wasn't
+     updated, it blocks the stop once with a reminder so Claude (which has the
+     context) writes a real progress entry and commits. Trade-off: some rounds
+     take one extra beat, and it can also fire on your own manual edits. It
+     never loops and never writes content itself.
+4. Records a per-round routine in the project's `CLAUDE.md` so future sessions
    keep `progress.md`, `plan.md`, etc. current and write meaningful commit
    messages.
 
@@ -95,7 +98,8 @@ git clone https://github.com/hfjddjksaj/auto-git.git "$env:USERPROFILE\.claude\s
 ```
 
 装好后，在任意代码项目里**新开**一个 Claude Code 会话，说"开启自动提交"即可；
-新建项目时 skill 也会自动触发。两个 Stop hook（progress-check 提醒更新进度、
-autocommit 兜底提交/推送）只会装进具体项目，且安装前会征求你的同意。
+新建项目时 skill 也会自动触发。autocommit hook（兜底提交/推送）只会装进具体
+项目，且安装前会征求你的同意；progress-check（进度提醒）是**可选项** ——
+安装时会单独询问并先说明后果，不同意就不装，默认不启用。
 
 更新：`git -C ~/.claude/skills/auto-git pull`

@@ -33,14 +33,16 @@ without them having to think about committing.
 
 This skill combines two mechanisms because they have different strengths:
 
-1. **Stop hooks — the backbone.** Project-local hooks run after every round,
-   whether or not anyone remembers. `progress-check` runs first: if the round
-   changed files but `progress.md` was left stale, it blocks once with a
-   reminder so you update the progress files while you still have the context
-   (it never writes content itself, and a `stop_hook_active` guard means it
-   can never loop). Then `autocommit` commits any uncommitted changes and
-   pushes when an upstream is configured. The harness runs them, so they
-   cannot be forgotten. This is what *guarantees* nothing is lost.
+1. **A Stop hook — the backbone.** A project-local `autocommit` hook commits
+   any uncommitted changes after every round, automatically, whether or not
+   anyone remembers, and pushes when an upstream is configured. The harness
+   runs it, so it cannot be forgotten. This is what *guarantees* nothing is
+   lost. An optional companion, `progress-check`, is offered separately during
+   setup and **never installed by default** (see step 4): if a round changed
+   files but left `progress.md` stale, it blocks the stop once with a reminder
+   so you update the progress files while you still have the context (it never
+   writes content itself, and a `stop_hook_active` guard means it can never
+   loop).
 
 2. **You writing real commit messages — the polish.** A hook is a dumb shell
    script; it can only write a generic timestamped message. A commit message
@@ -78,9 +80,10 @@ setup on an already-configured project should change nothing.
 If `.claude/settings.json` already contains a `Stop` hook that runs
 `autocommit`, auto-git is installed. Briefly confirm the pieces exist
 (`.gitignore`, the hook scripts, the initial commit) and stop. Don't duplicate
-anything. One exception: if `autocommit` is registered but `progress-check` is
-not (a project set up by an older version), offer to add just the
-`progress-check` entry per step 4 — inserted *before* the `autocommit` entry.
+anything. Note: `autocommit` present without `progress-check` is a normal,
+complete install — `progress-check` is opt-in, and its absence usually means
+the user declined it. Don't re-offer it on every re-run; add it (per step 4,
+inserted *before* the `autocommit` entry) only if the user asks for it.
 
 ### 1. Initialize the repository (if needed)
 
@@ -145,38 +148,52 @@ So don't try to slip it in via auto-accept. Make installation a **deliberate,
 approved step**.
 
 **Show the user exactly what will be installed, then get a yes/no before writing
-anything.** Present both hook scripts' paths and the precise commands that will
-run each round, and ask with a clear approve/decline prompt (use AskUserQuestion,
-or an equivalent explicit choice) — for example: *"Install the auto-git Stop
-hooks? After every round, `progress-check` reminds me once if I forgot to update
-progress.md, then `autocommit` runs `bash .claude/hooks/autocommit.sh` to commit
+anything.** Present the hook script's path and the precise command that will run
+each round, and ask with a clear approve/decline prompt (use AskUserQuestion, or
+an equivalent explicit choice) — for example: *"Install the auto-commit Stop
+hook? It will run `bash .claude/hooks/autocommit.sh` after every round to commit
 your changes."*
 
-- If the user **approves**, copy the scripts and write the hooks (below). They'll
-  also see Claude Code's own edit-permission prompt for `settings.json` — that's
-  expected, and now they know to accept it.
+- If the user **approves**, copy the script(s) and write the hook(s) (below).
+  They'll also see Claude Code's own edit-permission prompt for `settings.json`
+  — that's expected, and now they know to accept it.
 - If the user **declines**, skip the hooks entirely and continue with the rest of
   setup. Everything else still works — git init, `.gitignore`, progress files,
   and the per-round commits you make by hand. Tell the user plainly that without
-  the hooks there's no automatic safety net, so they're relying on your
+  the hook there's no automatic safety net, so they're relying on your
   end-of-round commits.
 
-When approved, copy both hook scripts for this OS and register them:
+**The optional `progress-check` hook — always ask, never install by default.**
+When the user approves `autocommit`, offer this one as a separate, explicit
+choice, and spell out the consequence so they can actually decide — for example:
 
-- **Windows:** copy `scripts/progress-check.ps1` and `scripts/autocommit.ps1`
-  → `.claude/hooks/`. Hook commands, in this order:
-  1. `pwsh -NoProfile -File .claude/hooks/progress-check.ps1`
-  2. `pwsh -NoProfile -File .claude/hooks/autocommit.ps1`
-  (fall back to `powershell -NoProfile -ExecutionPolicy Bypass -File ...`
-  if `pwsh` isn't available).
-- **macOS / Linux:** copy `scripts/progress-check.sh` and `scripts/autocommit.sh`
-  → `.claude/hooks/` and mark both executable (`chmod +x`). Hook commands, in
-  this order:
-  1. `bash .claude/hooks/progress-check.sh`
-  2. `bash .claude/hooks/autocommit.sh`
+> *"Optionally, also install the `progress-check` Stop hook? What it changes:
+> whenever a round modified files but progress.md wasn't updated, the hook
+> blocks the stop once and I keep working — updating the progress files and
+> committing — before the round truly ends. That keeps progress.md reliably
+> current, but some rounds take one extra beat, and it can also fire when you
+> edited files yourself and only asked me a question. If you skip it, nothing
+> else changes: autocommit still commits everything; progress updates just rely
+> on my per-round routine alone."*
 
-Register them by **merging** into any existing `.claude/settings.json` (never
-clobber other settings or hooks). The shape is:
+Install it only on an explicit yes. On a no — or no clear answer — register
+`autocommit` alone and move on; don't re-ask in later rounds.
+
+When approved, copy the hook script(s) for this OS and register them:
+
+- **Windows:** copy `scripts/autocommit.ps1` → `.claude/hooks/` (and
+  `scripts/progress-check.ps1` too, if opted in). Hook commands:
+  - autocommit: `pwsh -NoProfile -File .claude/hooks/autocommit.ps1`
+  - progress-check (if opted in): `pwsh -NoProfile -File .claude/hooks/progress-check.ps1`
+  (fall back to `powershell -NoProfile -ExecutionPolicy Bypass -File ...` if
+  `pwsh` isn't available).
+- **macOS / Linux:** copy `scripts/autocommit.sh` (and `scripts/progress-check.sh`
+  if opted in) → `.claude/hooks/` and mark them executable (`chmod +x`). Hook
+  commands: `bash .claude/hooks/autocommit.sh` and, if opted in,
+  `bash .claude/hooks/progress-check.sh`.
+
+Register by **merging** into any existing `.claude/settings.json` (never
+clobber other settings or hooks). With `autocommit` alone the shape is:
 
 ```json
 {
@@ -184,13 +201,22 @@ clobber other settings or hooks). The shape is:
     "Stop": [
       {
         "hooks": [
-          { "type": "command", "command": "<progress-check command from above>" },
           { "type": "command", "command": "<autocommit command from above>" }
         ]
       }
     ]
   }
 }
+```
+
+If the user opted into `progress-check`, its entry goes **before** the
+autocommit entry in the same array:
+
+```json
+        "hooks": [
+          { "type": "command", "command": "<progress-check command from above>" },
+          { "type": "command", "command": "<autocommit command from above>" }
+        ]
 ```
 
 **Order matters:** `progress-check` must be listed before `autocommit` — it has
@@ -287,9 +313,9 @@ is fine if the round did genuinely separate things. You don't need to push
 manually — the hook pushes when an upstream exists.
 
 A round that only answered a question and changed nothing needs no progress
-update and no commit. And if you forget the wrap-up, nothing is lost: the
-`progress-check` hook blocks once with a reminder so you can catch up, and if
-`progress.md` still goes untouched, the `autocommit` hook commits the leftovers
+update and no commit. And if you forget the wrap-up, nothing is lost: if the
+optional `progress-check` hook is installed it blocks once with a reminder so
+you can catch up, and either way the `autocommit` hook commits the leftovers
 with a generic message — the routine just keeps `progress.md` and history
 readable.
 
@@ -317,7 +343,8 @@ aggressive — the whole point is to help, never to surprise or destroy:
 - `scripts/autocommit.ps1` — Windows Stop-hook script (the safety net + push).
 - `scripts/autocommit.sh` — macOS/Linux Stop-hook script.
 - `scripts/progress-check.ps1` — Windows Stop-hook script (stale-progress.md
-  reminder; registered before autocommit).
+  reminder; **opt-in only** — asked separately during setup, registered before
+  autocommit when accepted).
 - `scripts/progress-check.sh` — macOS/Linux counterpart.
 - `assets/gitignore-base.txt` — universal `.gitignore` starting point.
 - `assets/progress-template.md` — starting structure for the project's
