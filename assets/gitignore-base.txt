@@ -1,0 +1,39 @@
+# === OS / editor junk ===
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+Desktop.ini
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+*.iml
+
+# === Secrets (never commit) ===
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+credentials.json
+service-account*.json
+secrets.*
+*.secret
+
+# === Logs & temp ===
+*.log
+logs/
+tmp/
+temp/
+*.tmp
+*.bak
+
+# === Build output (generic) ===
+dist/
+build/
+out/
+coverage/
