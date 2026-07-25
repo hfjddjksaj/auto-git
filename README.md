@@ -19,12 +19,14 @@ When activated in a code project, Claude:
    default**, with its consequences spelled out first:
    - **progress-check** — if a round changed files but `progress.md` wasn't
      updated, it blocks the stop once with a reminder so Claude (which has the
-     context) writes a real progress entry and commits. Trade-off: some rounds
+     context) refreshes the snapshot and commits. Trade-off: some rounds
      take one extra beat, and it can also fire on your own manual edits. It
      never loops and never writes content itself.
 4. Records a per-round routine in the project's `CLAUDE.md` so future sessions
    keep `progress.md`, `plan.md`, etc. current and write meaningful commit
-   messages.
+   messages. `progress.md` is maintained as a **snapshot of the current state**
+   — completed, superseded, and fixed items get deleted, not accumulated;
+   history stays in `git log`.
 
 Cross-platform: every hook ships as both bash (`.sh`, macOS/Linux) and
 PowerShell (`.ps1`, Windows).

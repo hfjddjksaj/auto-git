@@ -231,26 +231,40 @@ present.
 auto-git also keeps the project's progress files current each round, so the state
 of the work is always readable and survives context loss between sessions. During
 setup, create `progress.md` from `assets/progress-template.md` if it doesn't
-already exist (never overwrite an existing one). Its shape is a short living
-**Current status** section at the top plus an append-only dated **Log** below:
+already exist (never overwrite an existing one).
+
+**`progress.md` is a snapshot, not a ledger.** It describes the project *now*:
 
 ```markdown
 # Progress
 
 ## Current status
-
-_(rewritten each round to describe where the project is right now)_
-
-## Log
-
-### YYYY-MM-DD HH:MM — <short summary of the round>
-- <what changed>
+## Active decisions & constraints
+## Next steps
+## Known issues
 ```
+
+Every section has overwrite semantics — updating means rewriting it to current
+truth and **deleting** what no longer applies: completed steps, superseded
+decisions, fixed issues. History is git's job, not this file's — every previous
+version is one `git log -p -- progress.md` away, so deleting here never loses
+anything. Two writing rules keep the snapshot trustworthy:
+
+- **Claims carry pointers.** "Auth done (src/auth.ts)" — a later session can
+  verify that in seconds; "auth done" alone it can only believe or doubt.
+- **Size tracks task complexity, not elapsed time.** A progress.md that only
+  ever grows has become a ledger — trim it on the spot.
+
+**Old-format files:** if the project already has a progress.md with an
+append-only "Log" section (this skill's earlier shape), fold it in on the next
+update — keep the snapshot sections, delete the Log outright; its content is
+already in git history.
 
 Leave any other progress-type files the project already has (`plan.md`,
 `TODO.md`, `ROADMAP.md`, a changelog, etc.) in place — you'll keep them current
-each round too. Don't fabricate a planning structure the user didn't ask for
-beyond this one `progress.md`.
+each round too, with the same snapshot discipline where it fits (a changelog is
+a deliberate ledger; leave it one). Don't fabricate a planning structure the
+user didn't ask for beyond this one `progress.md`.
 
 ### 6. Record the per-round instructions in CLAUDE.md
 
@@ -264,9 +278,15 @@ already there:
 
 At the end of any round that changed the project, do these before finishing:
 
-1. **Update `progress.md`** — rewrite the "Current status" section to reflect
-   where things stand now, and append a dated entry to the "Log" summarizing
-   what changed this round.
+1. **Update `progress.md`** — it is a snapshot of the project *now*, not a
+   history. Rewrite its sections (Current status / Active decisions &
+   constraints / Next steps / Known issues) to current truth, and delete
+   anything completed, superseded, or fixed — history lives in `git log`, so
+   deleting here loses nothing. Give claims pointers to where they live in the
+   code ("auth done — src/auth.ts"). If the file only ever grows, it is
+   drifting into a ledger — trim it. If it still has an append-only "Log"
+   section (an older format), fold it in now: keep the snapshot sections,
+   delete the Log outright — its content is already in git history.
 2. **Refresh other progress files** that already exist — check off completed
    items in `plan.md` / `TODO.md`, add a changelog line, etc.
 3. **Update `CLAUDE.md` itself only when this round changed something it
@@ -298,8 +318,10 @@ once they add a remote + upstream).
 
 When a round changed the project, wrap it up in this order before you finish:
 
-1. **Update progress files.** Rewrite the "Current status" in `progress.md` and
-   append a dated "Log" entry for what changed this round. Check off / adjust any
+1. **Update progress files.** Rewrite `progress.md` as a snapshot of the
+   project *now*: sections to current truth, deleting anything completed,
+   superseded, or fixed (history lives in `git log`; deleting here loses
+   nothing), claims with pointers into the code. Check off / adjust any
    existing `plan.md`, `TODO.md`, changelog, etc. Update `CLAUDE.md` *only* if
    this round changed something it documents (architecture, decisions, commands,
    structure) — don't churn it every round.
@@ -348,6 +370,7 @@ aggressive — the whole point is to help, never to surprise or destroy:
 - `scripts/progress-check.sh` — macOS/Linux counterpart.
 - `assets/gitignore-base.txt` — universal `.gitignore` starting point.
 - `assets/progress-template.md` — starting structure for the project's
-  `progress.md` (living status + append-only log).
+  `progress.md` (a snapshot of current state — no append-only log; history
+  stays in git).
 - `references/gitignore-languages.md` — per-language `.gitignore` blocks to
   append based on the detected stack.

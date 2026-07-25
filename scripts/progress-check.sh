@@ -42,6 +42,6 @@ fi
 
 # Changes exist but progress.md is stale → nudge Claude once, then exit 0.
 cat <<'EOF'
-{"decision":"block","reason":"auto-git: this round changed files but progress.md was not updated. Before finishing: (1) rewrite the 'Current status' section of progress.md and append a dated Log entry for this round, (2) refresh any other progress files that exist (plan.md, TODO.md, changelog), (3) commit everything with a descriptive message. If the changes are trivial or not yours (e.g. the user's own edits), a one-line Log entry and a short commit are enough."}
+{"decision":"block","reason":"auto-git: this round changed files but progress.md was not updated. Before finishing: (1) update progress.md as a snapshot of the project NOW — rewrite its sections to current truth and delete anything completed, superseded, or fixed (history lives in git log, deleting here loses nothing; if the file still has an append-only Log section, delete it too), (2) refresh any other progress files that exist (plan.md, TODO.md, changelog), (3) commit everything with a descriptive message. If the changes are trivial or not yours (e.g. the user's own edits), a one-line status touch-up and a short commit are enough."}
 EOF
 exit 0
