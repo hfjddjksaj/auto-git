@@ -299,6 +299,22 @@ At the end of any round that changed the project, do these before finishing:
 Rounds that only answered a question and changed nothing need no update or commit.
 ```
 
+**Upgrade an older note in place — don't just skip it.** "An equivalent note is
+already there" means one that already carries this snapshot discipline, not merely
+any auto-git mention. If the project's `CLAUDE.md` has an *older or weaker* version
+of this note — one written before the snapshot rule, or that still tells sessions
+to keep an append-only "Log" — rewrite it to the wording above instead of leaving
+it stale. Preserve any deliberate project-specific choices the old note encoded
+(a commit-only "the hook never pushes" policy, a non-default progress-file name, a
+project working language) and change only the progress-file discipline. One caveat:
+if the project's progress file is gitignored, keep the "delete freely, history is in
+`git log`" clause out of its note — with nothing versioned, deleting there loses
+history, so treat that file as a running log kept readable, not a git-backed
+snapshot. This in-place upgrade is what keeps existing projects from drifting when
+this skill is later updated — updating the central skill never touches a project
+that was set up earlier, so the note has to be refreshed the next time setup runs
+there.
+
 ### 7. Make the initial commit
 
 Stage everything that isn't ignored and commit the baseline — include all files
